@@ -19,33 +19,34 @@ describe("observeBestMatch", () => {
     testPond.dispose();
   });
   it(`should give the best match for an event with the highest timestamp that is no greater than ${targetTimestampForBestMatch}`, async () => {
-    const cancelSubscription = testPond.events().observeBestMatch(
-      Tags(...TEST_TAGS),
-      //shouldReplace function to determine if next candidate is more suitable than current best
-      (nextCandidate, currentBest) => {
-        const shouldReplaceValue =
-          nextCandidate.meta.timestampMicros >
-            currentBest.meta.timestampMicros &&
-          nextCandidate.meta.timestampMicros <= 3;
-        console.log(
-          `Current best: ${currentBest.meta.timestampMicros}, Potential next candidate: ${nextCandidate.meta.timestampMicros}, shouldReplace returns: ${shouldReplaceValue}`
+    const actualTimestampOfBestMatch = await new Promise<number>(
+      (resolve, _reject) => {
+        const cancelSubscription = testPond.events().observeBestMatch(
+          Tags(...TEST_TAGS),
+          //shouldReplace function to determine if next candidate is more suitable than current best
+          (nextCandidate, currentBest) => {
+            const shouldReplaceValue =
+              nextCandidate.meta.timestampMicros >
+                currentBest.meta.timestampMicros &&
+              nextCandidate.meta.timestampMicros <= 3;
+            console.log(
+              `Current best: ${currentBest.meta.timestampMicros}, Potential next candidate: ${nextCandidate.meta.timestampMicros}, shouldReplace returns: ${shouldReplaceValue}`
+            );
+            return shouldReplaceValue;
+          },
+          //onReplaced function to handle the determined best match
+          (_event, metadata) => {
+            cancelSubscription();
+            console.log(
+              `Resulting best match has timestamp: ${metadata.timestampMicros}`
+            );
+            //Return timestamp value
+            resolve(metadata.timestampMicros);
+          }
         );
-        return shouldReplaceValue;
-      },
-      //onReplaced function to handle the determined best match
-      (_event, metadata) => {
-        cancelSubscription();
-        console.log(
-          `Resulting best match has timestamp: ${metadata.timestampMicros}`
-        );
-        //resulting best match should the be the event with the timestamp value
-        try {
-          expect(metadata.timestampMicros).toBe(targetTimestampForBestMatch);
-        } catch (error) {
-          fail("Timestamp of best match event is not the expected value");
-        }
       }
     );
+    expect(actualTimestampOfBestMatch).toBe(targetTimestampForBestMatch);
   });
 });
 
