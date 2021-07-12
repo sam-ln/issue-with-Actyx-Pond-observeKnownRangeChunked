@@ -28,7 +28,7 @@ describe("observeBestMatch", () => {
             const shouldReplaceValue =
               nextCandidate.meta.timestampMicros >
                 currentBest.meta.timestampMicros &&
-              nextCandidate.meta.timestampMicros <= 3;
+              nextCandidate.meta.timestampMicros <= targetTimestampForBestMatch;
             console.log(
               `Current best: ${currentBest.meta.timestampMicros}, Potential next candidate: ${nextCandidate.meta.timestampMicros}, shouldReplace returns: ${shouldReplaceValue}`
             );
@@ -51,7 +51,8 @@ describe("observeBestMatch", () => {
 });
 
 /**
- * Creates a simple TestPond with one stream and some events with gapless ascending
+ * Creates a simple TestPond with one stream and some events with
+ *  ascending
  * offsets, timestamps and lamport times, starting with 0.
  * This mimics a pond with a single ActyxOS node which has emitted some events.
  * @param numberOfEvents The amount of events to fill the TestPond with.
